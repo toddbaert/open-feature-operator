@@ -65,7 +65,7 @@ root@nginx:/# curl localhost:8080
 1.  `kubectl create ns 'open-feature-operator-system'`
 1.  `kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml`
 1.  `kubectl apply -f config/webhook/certificate.yaml`
-1.  `IMG=ghcr.io/open-feature/open-feature-operator:main make deploy`
+1.  `IMG=toddbaert/open-feature-operator:main make deploy`
 
 #### Run the example
 

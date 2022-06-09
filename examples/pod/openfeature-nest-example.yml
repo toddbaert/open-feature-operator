@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: openfeature-nest-example
+  annotations:
+    openfeature.dev: "enabled"
+    openfeature.dev/featureflagconfiguration: "featureflagconfiguration-sample"
+spec:
+  containers:
+    - name: openfeature-nest-example
+      image: toddbaert/openfeature-nest-example:latest
+      ports:
+        - containerPort: 3000

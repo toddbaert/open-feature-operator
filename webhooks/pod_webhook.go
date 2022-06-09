@@ -145,9 +145,9 @@ func (m *PodMutator) injectSidecar(pod *corev1.Pod, configMap string) ([]byte, e
 	})
 	pod.Spec.Containers = append(pod.Spec.Containers, corev1.Container{
 		Name:  "flagd",
-		Image: "ghcr.io/open-feature/flagd:main",
+		Image: "toddbaert/flagd-local:latest",
 		Args: []string{
-			"start", "-f", "/etc/flagd/config.json",
+			"start", "--uri", "/etc/flagd/config.json",
 		},
 		VolumeMounts: []corev1.VolumeMount{
 			{

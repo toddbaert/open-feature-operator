@@ -7,110 +7,259 @@ https://github.com/open-feature/playground/blob/main/schemas/flag.schema.json
 func GetSchema() string {
 	return `
 	{
-		"$schema": "https://json-schema.org/draft/2020-12/schema",
-		"$id": "https://openfeature.dev/flag.schema.json",
-		"title": "OpenFeature Feature Flags",
 		"type": "object",
-		"patternProperties": {
-		  "^[A-Za-z]+$": {
-			"description": "The flag key that uniquely represents the flag.",
-			"type": "object",
-			"properties": {
-			  "name": {
-				"type": "string"
-			  },
-			  "description": {
-				"type": "string"
-			  },
-			  "returnType": {
-				"type": "string",
-				"enum": ["boolean", "string", "number", "object"],
-				"default": "boolean"
-			  },
-			  "variants": {
-				"type": "object",
-				"patternProperties": {
-				  "^[A-Za-z]+$": {
-					"properties": {
-					  "value": {
-						"type": ["string", "number", "boolean", "object"]
-					  }
-					}
-				  },
-				  "additionalProperties": false
-				},
-				"minProperties": 2,
-				"default": { "enabled": true, "disabled": false }
-			  },
-			  "defaultVariant": {
-				"type": "string",
-				"default": "enabled"
-			  },
-			  "state": {
-				"type": "string",
-				"enum": ["enabled", "disabled"],
-				"default": "enabled"
-			  },
-			  "rules": {
-				"type": "array",
-				"items": {
-				  "$ref": "#/$defs/rule"
-				},
-				"default": []
-			  }
-			},
-			"required": ["state"],
-			"additionalProperties": false
-		  }
-		},
-		"additionalProperties": false,
-	  
-		"$defs": {
-		  "rule": {
-			"type": "object",
-			"description": "A rule that ",
-			"properties": {
-			  "action": {
-				"description": "The action that should be taken if at least one condition evaluates to true.",
+		"schemas": {
+			"BooleanFlag": {
 				"type": "object",
 				"properties": {
-				  "variant": {
-					"type": "string",
-					"description": "The variant that should be return if one of the conditions evaluates to true."
-				  }
-				},
-				"required": ["variant"],
-				"additionalProperties": false
-			  },
-			  "conditions": {
-				"type": "array",
-				"description": "The conditions that should that be evaluated.",
-				"items": {
-				  "type": "object",
-				  "properties": {
-					"context": {
-					  "type": "string",
-					  "description": "The context key that should be evaluated in this condition"
+					"variants": {
+						"description": "variants: struct.MaxFields(2) \u0026 {",
+						"type": "object",
+						"required": [
+							"enabled",
+							"disabled"
+						],
+						"properties": {
+							"enabled": {
+								"type": "boolean",
+								"enum": [
+									true
+								]
+							},
+							"disabled": {
+								"type": "boolean",
+								"enum": [
+									false
+								]
+							}
+						}
 					},
-					"op": {
-					  "type": "string",
-					  "description": "The operation that should be performed",
-					  "enum": ["equals", "starts_with", "ends_with"]
-					},
-					"value": {
-					  "type": "string",
-					  "description": "The value that should be evaluated"
+					"defaultVariant": {
+						"type": "string",
+						"enum": [
+							"enabled",
+							"disabled"
+						],
+						"default": "enabled"
 					}
-				  },
-				  "required": ["context", "op", "value"],
-				  "additionalProperties": false
-				}
-			  }
+				},
+				"allOf": [
+					{
+						"$ref": "#/schemas/Flag"
+					},
+					{
+						"required": [
+							"variants",
+							"defaultVariant"
+						]
+					}
+				]
 			},
-			"required": ["action", "conditions"],
-			"additionalProperties": false
-		  }
+			"Flag": {
+				"type": "object",
+				"required": [
+					"state",
+					"variants",
+					"defaultVariant",
+					"rules"
+				],
+				"properties": {
+					"state": {
+						"type": "string",
+						"enum": [
+							"enabled",
+							"disabled"
+						]
+					},
+					"variants": {
+						"description": "variants: struct.MinFields(2) \u0026 {",
+						"type": "object"
+					},
+					"defaultVariant": {
+						"description": "The default variant must match a defined variant",
+						"type": "string"
+					},
+					"rules": {
+						"type": "array",
+						"items": {
+							"type": "object",
+							"required": [
+								"action",
+								"condition"
+							],
+							"properties": {
+								"action": {
+									"description": "TODO: only one action can be set at a time",
+									"type": "object",
+									"required": [
+										"variant"
+									],
+									"properties": {
+										"variant": {
+											"description": "variant: or([for f, _ in variants {f}])",
+											"type": "string"
+										}
+									}
+								},
+								"condition": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"required": [
+											"context",
+											"op",
+											"value"
+										],
+										"properties": {
+											"context": {
+												"description": "The context key that should be evaluated in this condition",
+												"type": "string"
+											},
+											"op": {
+												"description": "The operation that should be performed",
+												"type": "string",
+												"enum": [
+													"equals",
+													"starts_with",
+													"ends_with"
+												]
+											},
+											"value": {
+												"description": "The value that should be evaluated\nTODO see if more values are possible",
+												"type": "string"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"Flagd": {
+				"type": "object",
+				"properties": {
+					"booleanFlags": {
+						"type": "object",
+						"additionalProperties": {
+							"$ref": "#/schemas/BooleanFlag"
+						}
+					},
+					"stringFlags": {
+						"type": "object",
+						"additionalProperties": {
+							"$ref": "#/schemas/StringFlag"
+						}
+					},
+					"numericFlags": {
+						"type": "object",
+						"additionalProperties": {
+							"$ref": "#/schemas/NumericFlag"
+						}
+					},
+					"objectFlags": {
+						"type": "object",
+						"additionalProperties": {
+							"$ref": "#/schemas/ObjectFlag"
+						}
+					}
+				}
+			},
+			"NumericFlag": {
+				"type": "object",
+				"properties": {
+					"variants": {
+						"description": "defaultVariant: or([for f, _ in variants {f}])",
+						"type": "object",
+						"additionalProperties": {
+							"type": "number"
+						}
+					}
+				},
+				"allOf": [
+					{
+						"$ref": "#/schemas/Flag"
+					},
+					{
+						"required": [
+							"variants"
+						]
+					}
+				]
+			},
+			"ObjectFlag": {
+				"type": "object",
+				"properties": {
+					"variants": {
+						"description": "defaultVariant: or([for f, _ in variants {f}])",
+						"type": "object",
+						"additionalProperties": {
+							"description": "Any valid structs will work",
+							"type": "object"
+						}
+					}
+				},
+				"allOf": [
+					{
+						"$ref": "#/schemas/Flag"
+					},
+					{
+						"required": [
+							"variants"
+						]
+					}
+				]
+			},
+			"StringFlag": {
+				"type": "object",
+				"properties": {
+					"variants": {
+						"description": "defaultVariant: or([for f, _ in variants {f}])",
+						"type": "object",
+						"additionalProperties": {
+							"type": "string"
+						}
+					}
+				},
+				"allOf": [
+					{
+						"$ref": "#/schemas/Flag"
+					},
+					{
+						"required": [
+							"variants"
+						]
+					}
+				]
+			}
+		},
+		"$schema": "http://json-schema.org/draft-04/schema#",
+		"properties": {
+			"booleanFlags": {
+				"type": "object",
+				"additionalProperties": {
+					"$ref": "#/schemas/BooleanFlag"
+				}
+			},
+			"stringFlags": {
+				"type": "object",
+				"additionalProperties": {
+					"$ref": "#/schemas/StringFlag"
+				}
+			},
+			"numericFlags": {
+				"type": "object",
+				"additionalProperties": {
+					"$ref": "#/schemas/NumericFlag"
+				}
+			},
+			"objectFlags": {
+				"type": "object",
+				"additionalProperties": {
+					"$ref": "#/schemas/ObjectFlag"
+				}
+			}
 		}
-	  }
+	}
 	`
 }
